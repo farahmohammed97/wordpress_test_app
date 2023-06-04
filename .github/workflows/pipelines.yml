@@ -1,4 +1,4 @@
-name: Wordpress pipelines
+name: WordPress CI/CD Pipeline
 
 on:
   push:
@@ -9,44 +9,61 @@ on:
       - main
 
 env:
+  SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+  SNYK_TOKEN:  ${{ secrets.SNYK_TOKEN }}
+
 
 jobs:
-
-  install-and-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          pip3 install -r requirements.txt
-      - name: Test
-        run: |
-          python manage.py migrate
-          pytest
 
-  install-and-lint:
+      # - name: SonarCloud Scan
+      #   uses: sonarsource/sonarcloud-github-action@master
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_PROJECT_KEY: "farahmohammed97_wordpress_test_app"
+      #     SONAR_ORGANIZATION: "farahmohammed97"
+
+      - name: Snyk vulnerability scan
+        uses: snyk/actions@0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2' 
+
+      # - name: Install dependencies
+      #   run: |
+      #     curl -sS https://getcomposer.org/installer -o composer-setup.php
+      #     sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+      #     composer update
+      #     composer install
+ 
+      - name: Run PHP_CodeSniffer
+        run: vendor/bin/phpcs --standard=./bedrock-coding-standard .
+
+
+  wordpress:
     runs-on: ubuntu-latest
+    needs: build
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: Build WordPress
         run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          pip3 install -r requirements.txt
-          pip3 install flake8
-      - name: Lint
-        continue-on-error: true
-        run: |
-          flake8 .
+          # Customize build commands as per your project requirements
+          npm install
+          npm run build
+          composer run-script build
+
 
   merge:
     permissions: write-all
     runs-on: ubuntu-latest
-    needs: [ install-and-lint, install-and-test ]
+    needs: wordpress
     steps:
       - uses: actions/checkout@v2
       - name: Branch Merge
@@ -57,39 +74,14 @@ jobs:
           target_branch: 'main'
           commit_message_template:  Merged {source_ref} into {target_branch}.
 
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: merge
+  #   steps:
+  #   - name: Clear Plesk Cache
+  #     run: |
+  #       # Add commands to clear Plesk cache if necessary
 
-  build-and-push:
-    permissions: write-all
-    runs-on: ubuntu-latest
-    needs: merge
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      - name: Login to Docker registry
-        uses: docker/login-action@v1
-        with:
-          registry: ${{ secrets.CI_REGISTRY_URL }}
-          username: ${{ secrets.CI_REGISTRY_USER }}
-          password: ${{ secrets.CI_REGISTRY_PASS }}
-      - name: Build and push
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          push: true
-          cache-from: ${{ secrets.CI_REGISTRY_URL }}/${{ secrets.CI_IMAGE }}:latest
-          tags: |
-            ${{ secrets.CI_REGISTRY_URL }}/${{ secrets.CI_IMAGE }}:${{ github.sha }}
-            ${{ secrets.CI_REGISTRY_URL }}/${{ secrets.CI_IMAGE }}:latest
-
-  deploy:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy
-        run: |
-          wget --server-response --method POST "https://${{ secrets.PORTAINER_URL }}/api/webhooks/${{ secrets.PORTAINER_WEBHOOK_TOKEN }}"
-          wget --server-response --method POST "https://${{ secrets.PORTAINER_URL }}/api/webhooks/${{ secrets.SANDBOX_PORTAINER_WEBHOOK_TOKEN }}"
+  #   - name: Deploy to Plesk
+  #     run: |
+  #       # Add commands to deploy to Plesk if necessary

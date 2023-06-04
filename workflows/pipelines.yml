@@ -1,0 +1,86 @@
+name: WordPress CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+  SNYK_TOKEN:  ${{ secrets.SNYK_TOKEN }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # - name: SonarCloud Scan
+      #   uses: sonarsource/sonarcloud-github-action@master
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+      #     SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+      - name: Snyk vulnerability scan
+        uses: snyk/actions@0.4.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4' 
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get install zip
+          curl -sS https://getcomposer.org/installer -o composer-setup.php
+          sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          composer install
+
+      - name: ESLint
+        uses: actions/setup-node@v2
+      - run: npm install eslint
+      - run: npx eslint . --ext .js,.ts
+
+      # - name: Wp-Sniffer
+      #   uses: davidbinda/wp-sniffer-github-action@v1
+
+  wordpress:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Build WordPress
+        run: |
+          # Customize build commands as per your project requirements
+          npm install
+          npm run build
+          composer run-script build
+
+
+  # merge:
+  #   permissions: write-all
+  #   runs-on: ubuntu-latest
+  #   needs: wordpress
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - name: Branch Merge
+  #       uses: everlytic/branch-merge@1.1.2
+  #       with:
+  #         github_token: ${{ github.token }}
+  #         source_ref: ${{ github.ref }}
+  #         target_branch: 'main'
+  #         commit_message_template:  Merged {source_ref} into {target_branch}.
+
+      # - name: Clear Plesk Cache
+      #   run: |
+      #     # Add commands to clear Plesk cache if necessary
+
+      # - name: Deploy to Plesk
+      #   run: |
+      #     # Add commands to deploy to Plesk if necessary
