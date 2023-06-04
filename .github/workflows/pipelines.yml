@@ -11,8 +11,7 @@ on:
 env:
   SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
   SNYK_TOKEN:  ${{ secrets.SNYK_TOKEN }}
-  SONAR_PROJECT_KEY:  ${{ secrets.SONAR_PROJECT_KEY }}
-  SONAR_ORGANIZATION:  ${{ secrets.SONAR_ORGANIZATION }}
+
 
 jobs:
   build:
@@ -58,7 +57,9 @@ jobs:
           node-version: 14
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+         npm install
+         npm run build
 
       - name: Run ESLint
         run: npm run lint
@@ -75,19 +76,19 @@ jobs:
           composer run-script build
 
 
-  # merge:
-  #   permissions: write-all
-  #   runs-on: ubuntu-latest
-  #   needs: wordpress
-  #   steps:
-  #     - uses: actions/checkout@v2
-  #     - name: Branch Merge
-  #       uses: everlytic/branch-merge@1.1.2
-  #       with:
-  #         github_token: ${{ github.token }}
-  #         source_ref: ${{ github.ref }}
-  #         target_branch: 'main'
-  #         commit_message_template:  Merged {source_ref} into {target_branch}.
+  merge:
+    permissions: write-all
+    runs-on: ubuntu-latest
+    needs: wordpress
+    steps:
+      - uses: actions/checkout@v2
+      - name: Branch Merge
+        uses: everlytic/branch-merge@1.1.2
+        with:
+          github_token: ${{ github.token }}
+          source_ref: ${{ github.ref }}
+          target_branch: 'main'
+          commit_message_template:  Merged {source_ref} into {target_branch}.
 
       # - name: Clear Plesk Cache
       #   run: |
