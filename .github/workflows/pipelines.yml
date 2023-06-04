@@ -44,11 +44,11 @@ jobs:
       #     curl -sS https://getcomposer.org/installer -o composer-setup.php
       #     sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
       #     composer install
-
+        
       - name: ESLint
         uses: actions/setup-node@v2
       - run:
-          cd web
+        working-directory: web
           npm install eslint
           npx eslint . --ext .js --ext .ts
 
