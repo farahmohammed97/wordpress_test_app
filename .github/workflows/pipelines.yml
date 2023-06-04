@@ -27,6 +27,8 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+        with:
+          args: -X 
 
       - name: Snyk vulnerability scan
         uses: snyk/actions@0.4.0
