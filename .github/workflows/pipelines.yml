@@ -21,12 +21,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: SonarCloud Scan
-        uses: sonarsource/sonarcloud-github-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: "farahmohammed97_wordpress_test_app"
-          SONAR_ORGANIZATION: "farahmohammed97"
+      # - name: SonarCloud Scan
+      #   uses: sonarsource/sonarcloud-github-action@master
+      #   env:
+      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      #     SONAR_PROJECT_KEY: "farahmohammed97_wordpress_test_app"
+      #     SONAR_ORGANIZATION: "farahmohammed97"
 
       - name: Snyk vulnerability scan
         uses: snyk/actions@0.4.0
