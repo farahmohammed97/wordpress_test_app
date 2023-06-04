@@ -47,11 +47,10 @@ jobs:
 
       - name: ESLint
         uses: actions/setup-node@v2
-      - run: npm install eslint
-      - run: npx eslint . --ext .js,.ts
-
-      # - name: Wp-Sniffer
-      #   uses: davidbinda/wp-sniffer-github-action@v1
+      - run:
+          cd web
+          npm install eslint
+          npx eslint . --ext .js --ext .ts
 
   wordpress:
     runs-on: ubuntu-latest
