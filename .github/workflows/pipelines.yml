@@ -37,12 +37,11 @@ jobs:
         with:
           php-version: '7.4' 
 
-      # - name: Install dependencies
-      #   run: |
-      #     sudo apt-get install zip
-      #     curl -sS https://getcomposer.org/installer -o composer-setup.php
-      #     sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
-      #     composer install
+      - name: Install dependencies
+        run: |
+          curl -sS https://getcomposer.org/installer -o composer-setup.php
+          sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+          composer install
 
   lint:
     runs-on: ubuntu-latest
