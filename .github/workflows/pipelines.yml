@@ -9,18 +9,15 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      # Add SonarCloud step
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
-      # Add Snyk step
       - name: Snyk vulnerability scan
         uses: snyk/actions/scan@v3
         env:
@@ -29,7 +26,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.4' # Adjust to your desired PHP version
+          php-version: '7.4' 
 
       - name: Install dependencies
         run: |
@@ -38,16 +35,18 @@ jobs:
           sudo php composer-setup.php --install-dir=/usr/local/bin --filename=composer
           composer install
 
-      # Add ESLint step
       - name: ESLint
         uses: actions/setup-node@v2
       - run: npm install eslint
       - run: npx eslint . --ext .js,.ts
 
-      # Add Wp-Sniffer step
       - name: Wp-Sniffer
         uses: davidbinda/wp-sniffer-github-action@v1
 
+  wordpress:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
       - name: Build WordPress
         run: |
           # Customize build commands as per your project requirements
@@ -55,21 +54,10 @@ jobs:
           npm run build
           composer run-script build
 
-      - name: Configure AWS CLI
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: 'us-east-1' # Adjust to your desired AWS region
+      # - name: Clear Plesk Cache
+      #   run: |
+      #     # Add commands to clear Plesk cache if necessary
 
-      - name: Deploy to AWS S3
-        run: |
-          aws s3 sync ./dist s3://your-bucket-name --delete
-
-      - name: Clear Plesk Cache
-        run: |
-          # Add commands to clear Plesk cache if necessary
-
-      - name: Deploy to Plesk
-        run: |
-          # Add commands to deploy to Plesk if necessary
+      # - name: Deploy to Plesk
+      #   run: |
+      #     # Add commands to deploy to Plesk if necessary
